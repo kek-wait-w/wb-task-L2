@@ -8,89 +8,62 @@ import "fmt"
 	https://en.wikipedia.org/wiki/Visitor_pattern
 */
 
+type Element interface {
+	Accept(visitor Visitor)
+}
+
+type ConcreteElementA struct{}
+
+func (cea *ConcreteElementA) Accept(visitor Visitor) {
+	visitor.VisitConcreteElementA(cea)
+}
+
+type ConcreteElementB struct{}
+
+func (ceb *ConcreteElementB) Accept(visitor Visitor) {
+	visitor.VisitConcreteElementB(ceb)
+}
+
 type Visitor interface {
-	visitForFord(*Ford)
-	visitForToyota(*Toyota)
-	visitForMB(*MB)
+	VisitConcreteElementA(element *ConcreteElementA)
+	VisitConcreteElementB(element *ConcreteElementB)
 }
 
-type Car interface {
-	GetModel() string
-	check(Visitor)
+type ConcreteVisitor1 struct{}
+
+func (cv1 *ConcreteVisitor1) VisitConcreteElementA(element *ConcreteElementA) {
+	fmt.Println("ConcreteVisitor1: VisitConcreteElementA")
 }
 
-type Ford struct {
-	model string
+func (cv1 *ConcreteVisitor1) VisitConcreteElementB(element *ConcreteElementB) {
+	fmt.Println("ConcreteVisitor1: VisitConcreteElementB")
 }
 
-func (f *Ford) check(v Visitor) {
-	v.visitForFord(f)
+type ConcreteVisitor2 struct{}
+
+func (cv2 *ConcreteVisitor2) VisitConcreteElementA(element *ConcreteElementA) {
+	fmt.Println("ConcreteVisitor2: VisitConcreteElementA")
 }
 
-func (f *Ford) GetModel() string {
-	return f.model
-}
-
-type Toyota struct {
-	model string
-	anime string
-}
-
-func (t *Toyota) check(v Visitor) {
-	v.visitForToyota(t)
-}
-
-func (t *Toyota) GetModel() string {
-	return t.model
-}
-
-type MB struct {
-	model      string
-	backgammon string
-}
-
-func (m *MB) check(v Visitor) {
-	v.visitForMB(m)
-}
-
-func (m *MB) GetModel() string {
-	return m.model
-}
-
-type Inspector struct {
-}
-
-func (i *Inspector) visitForFord(c *Ford) {
-	fmt.Printf("Successful Ford check: %t \n", c.model == "Ford")
-
-}
-
-func (i *Inspector) visitForToyota(c *Toyota) {
-	fmt.Printf("Successful Toyota check: %t \n", c.model == "Toyota")
-}
-func (i *Inspector) visitForMB(c *MB) {
-	fmt.Printf("Successful MB check: %t \n", c.model == "MB")
-}
-
-func main() {
-	Car1 := &Ford{"Ford"}
-	Car2 := &Toyota{model: "Toyota"}
-	Car3 := &MB{model: "BMW"}
-
-	InspectorDPS := &Inspector{}
-
-	Car1.check(InspectorDPS)
-	Car2.check(InspectorDPS)
-	Car3.check(InspectorDPS)
+func (cv2 *ConcreteVisitor2) VisitConcreteElementB(element *ConcreteElementB) {
+	fmt.Println("ConcreteVisitor2: VisitConcreteElementB")
 }
 
 /*
-	Паттерн "посетитель" позволяет нам добавить функционала к существующей структуре, не изменяя ее структуру.
+Применимость:
+Используется, когда нужно добавить новую функциональность к классам, но изменение их кода нежелательно или невозможно.
+Полезен, когда есть набор объектов различных типов и требуется выполнить различные операции над ними без изменения их классов.
+
 Плюсы:
-	1. Упрощает добавление операций, работающих со сложными структурами объектов.
-	2. Объединяет родственные операции в одном классе.
-	3. Посетитель может накапливать состояние при обходе структуры элементов.
+Позволяет добавлять новые операции, не изменяя классы элементов.
+Упрощает процесс добавления новых операций, так как все они объединены в одном месте - в посетителе.
+
 Минусы:
-	1. Паттерн не оправдан, если иерархия элементов часто меняется.
-	2. Может привести к нарушению инкапсуляции элементов.
+Может привести к усложнению кода, особенно если в системе большое количество классов и операций.
+Необходимость реализации методов Accept в каждом классе элементов может привести к нарушению инкапсуляции.
+
+Примеры использования на практике:
+Обработка структуры документа (например, HTML-документа) различными операциями, такими как отображение, сохранение в файл и т. д.
+Посещение различных узлов дерева (например, DOM-дерева веб-страницы) для выполнения различных операций, таких как обход, изменение стилей и т. д.
+Генерация кода из абстрактного синтаксического дерева (AST) различными посетителями для различных языков программирования.
 */

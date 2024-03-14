@@ -7,96 +7,73 @@ import "fmt"
 Объяснить применимость паттерна, его плюсы и минусы, а также реальные примеры использования данного примера на практике.
 	https://en.wikipedia.org/wiki/Chain-of-responsibility_pattern
 */
-type Service interface {
-	Execute(*Data)
-	SetNext(Service)
+
+type Handler interface {
+	handle(request int)
+	setNext(handler Handler)
 }
 
-type Data struct {
-	GetSource    bool
-	UpdateSource bool
+type BaseHandler struct {
+	nextHandler Handler
 }
 
-type Device1 struct {
-	Name string
-	Next Service
+func (bh *BaseHandler) setNext(handler Handler) {
+	bh.nextHandler = handler
 }
 
-type UpdateDataService struct {
-	Name string
-	Next Service
+type Handler1 struct {
+	BaseHandler
 }
 
-type DataService struct {
-	Next Service
-}
-
-func (device *Device1) Execute(data *Data) {
-	if data.GetSource {
-		fmt.Printf("Data from device [%s] already get. \n", device.Name)
-		device.Next.Execute(data)
-		return
+func (h *Handler1) handle(request int) {
+	if request <= 10 {
+		fmt.Println("Handler1 обрабатывает запрос", request)
+	} else if h.nextHandler != nil {
+		h.nextHandler.handle(request)
 	}
-	fmt.Printf("Get data from device [%s]. \n", device.Name)
-	data.GetSource = true
-	device.Next.Execute(data)
 }
 
-func (device *Device1) SetNext(srv Service) {
-	device.Next = srv
+type Handler2 struct {
+	BaseHandler
 }
 
-func (upd *UpdateDataService) Execute(data *Data) {
-	if data.UpdateSource {
-		fmt.Printf("Data from device [%s] already update \n", upd.Name)
-		upd.Next.Execute(data)
-		return
+func (h *Handler2) handle(request int) {
+	if request <= 20 {
+		fmt.Println("Handler2 обрабатывает запрос", request)
+	} else if h.nextHandler != nil {
+		h.nextHandler.handle(request)
 	}
-	fmt.Printf("Update data from service [%s]. \n", upd.Name)
-	data.UpdateSource = true
-	upd.Next.Execute(data)
 }
 
-func (upd *UpdateDataService) SetNext(srv Service) {
-	upd.Next = srv
+type Handler3 struct {
+	BaseHandler
 }
 
-func (upd *DataService) Execute(data *Data) {
-	if !data.GetSource {
-		fmt.Printf("Data not update")
-		return
+func (h *Handler3) handle(request int) {
+	if request <= 30 {
+		fmt.Println("Handler3 обрабатывает запрос", request)
+	} else {
+		fmt.Println("Ни один обработчик не может обработать запрос", request)
 	}
-	fmt.Printf("Data save.")
-}
-
-func (upd *DataService) SetNext(srv Service) {
-	upd.Next = srv
-}
-
-func main() {
-	device := &Device1{Name: "Device-1"}
-	updateSvc := &UpdateDataService{Name: "Update-1"}
-	dataSvc := &DataService{}
-	device.SetNext(updateSvc)
-	updateSvc.SetNext(dataSvc)
-	data := &Data{}
-	device.Execute(data)
 }
 
 /*
-Описание:
-Цепочка обязанностей — это поведенческий паттерн проектирования,
-который позволяет передавать запросы последовательно по цепочке обработчиков.
-Каждый последующий обработчик решает, может ли он обработать запрос сам
-и стоит ли передавать запрос дальше по цепи.
-Преимущества:
-1. Уменьшает зависимость между клиентом и обработчиками.
-2. Реализует принцип единственной обязанности.
-3. Реализует принцип открытости/закрытости.
-Недостатки:
-1. Запрос может остаться никем не обработанным.
-*/
+Применимость паттерна:
+Когда у вас есть несколько объектов, которые могут обработать запрос, и вы не хотите знать, какой конкретно объект его обработает.
+Когда набор объектов и способ их обработки может изменяться динамически во время выполнения программы.
+Когда вам нужно обработать запрос в определенном порядке.
 
-/*
-	Цепочка ответственностей может быть как линейной, так и разветвленной.
+Плюсы:
+Уменьшение зависимости между отправителем запроса и его получателем.
+Гибкость в добавлении новых обработчиков или изменении порядка существующих.
+Позволяет избежать жестких связей между отправителем запроса и его получателем.
+
+Минусы:
+Не гарантирует, что запрос будет обработан. Если ни один из обработчиков не сможет обработать запрос, то он останется необработанным.
+Может привести к дополнительным накладным расходам из-за прохода через всю цепочку обработчиков.
+
+Примеры использования:
+Обработка запросов HTTP в веб-фреймворках, где запрос может быть обработан разными по мере роста.
+Обработка событий пользовательского интерфейса в графических редакторах, где каждый элемент интерфейса может обрабатывать события независимо.
+Паттерн «цепочка вызовов» помогает создавать гибкие и расширяемые системы, где каждый компонент выполняет свою четко определенную задачу, а цепочка их связывает для обработки запросов в удобном порядке.
 */

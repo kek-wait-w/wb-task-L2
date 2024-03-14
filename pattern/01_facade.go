@@ -1,6 +1,6 @@
 package pattern
 
-import _ "time"
+import "fmt"
 
 /*
 	Реализовать паттерн «фасад».
@@ -8,61 +8,65 @@ import _ "time"
 	https://en.wikipedia.org/wiki/Facade_pattern
 */
 
-//Обьект магазина
-type Shop struct {
+type SubsystemA struct{}
+
+func (sa *SubsystemA) OperationA() {
+	fmt.Println("SubsystemA: OperationA")
 }
 
-func (s *Shop) IsAvailable() bool {
-	return true
-}
-func (s *Shop) Sell() {
-}
-func (s *Shop) СheckClientAccaunt() {
+type SubsystemB struct{}
+
+func (sb *SubsystemB) OperationB() {
+	fmt.Println("SubsystemB: OperationB")
 }
 
-//Обьект склада
-type Warehouse struct {
+type SubsystemC struct{}
+
+func (sc *SubsystemC) OperationC() {
+	fmt.Println("SubsystemC: OperationC")
 }
 
-func (s *Warehouse) IsAvailable() bool {
-	return true
-}
-
-//Фасад содержит в себе объект(ы) имеющий сложную логику. Используя методы объекта в своих собственных
-//фасад упрощает работу с ними. Можно сократить до одной функции фасада
 type Facade struct {
-	S Shop
-	W Warehouse
+	subsystemA *SubsystemA
+	subsystemB *SubsystemB
+	subsystemC *SubsystemC
 }
 
 func NewFacade() *Facade {
 	return &Facade{
-		S: Shop{},
-		W: Warehouse{},
+		subsystemA: &SubsystemA{},
+		subsystemB: &SubsystemB{},
+		subsystemC: &SubsystemC{},
 	}
 }
 
-func (f *Facade) Sell() {
-	if f.S.IsAvailable() || f.W.IsAvailable() {
-		f.S.СheckClientAccaunt()
-		f.S.Sell()
-	}
+func (f *Facade) Operation1() {
+	fmt.Println("Facade: Operation1")
+	f.subsystemA.OperationA()
+	f.subsystemB.OperationB()
 }
 
-func (f *Facade) IsAvailable() bool {
-	return f.S.IsAvailable() || f.W.IsAvailable()
+func (f *Facade) Operation2() {
+	fmt.Println("Facade: Operation2")
+	f.subsystemB.OperationB()
+	f.subsystemC.OperationC()
 }
 
 /*
-**Фасад** — это структурный паттерн проектирования, который предоставляет простой интерфейс к сложной системе классов,
-библиотеке или фреймворку.
-## Преимущества и недостатки
-+  Изолирует клиентов от компонентов сложной подсистемы.
--  Фасад рискует стать объектом, привязанным ко всем классам программы.
-## Применимость
- Когда вам нужно представить простой или урезанный интерфейс к сложной подсистеме.
- Когда вы хотите разложить подсистему на отдельные слои.
- Фасад содержит в себе объект(ы) имеющий сложную логику. Используя методы объекта в своих собственных
-Фасад упрощает работу с ними. Можно сократить до одной функции фасада
-Это как надстройка над сложным объектом, которая в своих методах использует по несколько методов сложного объекта
+Применимость:
+
+Используется, когда нужно предоставить простой интерфейс для сложной системы с множеством взаимосвязанных классов.
+Подходит, когда необходимо разделить подсистему на уровни, и предоставить уровень, через который остальная часть системы будет взаимодействовать с подсистемой.
+
+Плюсы:
+Уменьшает зависимость между клиентом и подсистемой, так как клиент взаимодействует только с фасадом.
+Упрощает работу с подсистемой, скрывая её сложность и предоставляя простой интерфейс.
+
+Минусы:
+Может привести к увеличению числа классов в системе, так как для каждой подсистемы нужно создать свой фасад.
+Фасад может стать узким местом, если он становится единственной точкой взаимодействия с подсистемой.
+
+Примеры:
+Веб-приложение, использующее различные сервисы (например, авторизация, отправка электронной почты, управление данными), может иметь фасад для упрощения взаимодействия с этими сервисами.
+Графический пользовательский интерфейс, который скрывает сложность управления виджетами и элементами управления.
 */

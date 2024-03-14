@@ -25,6 +25,7 @@ import (
 
 Программа должна проходить все тесты. Код должен проходить проверки go vet и golint.
 */
+
 type flags struct {
 	After   int
 	Before  int
@@ -35,102 +36,62 @@ type flags struct {
 	Fixed   bool
 	LineNum bool
 }
+
 type result struct {
 	strs     [][]string
 	lineNums []int
 }
 
-//инициализация флагов
+// Инициализация флагов
 func flagsInit() flags {
 	fl := flags{}
-	flag.IntVar(&fl.After, "A", 0, "'after' печатать +N строк после совпадения")
-	flag.IntVar(&fl.Before, "B", 0, "'before' печатать +N строк до совпадения")
-	flag.IntVar(&fl.Context, "C", 0, "'context' (A+B) печатать ±N строк вокруг совпадения")
-	flag.BoolVar(&fl.Count, "c", false, "'count' (количество строк)")
-	flag.BoolVar(&fl.Ignore, "i", false, "'ignore-case' (игнорировать регистр)")
-	flag.BoolVar(&fl.Invert, "v", false, "'invert' (вместо совпадения, исключать)")
-	flag.BoolVar(&fl.Fixed, "F", false, "'fixed', точное совпадение со строкой")
-	flag.BoolVar(&fl.LineNum, "n", false, "'line num', печатать номер строки")
+	flag.IntVar(&fl.After, "A", 0, "Print N lines after each match")
+	flag.IntVar(&fl.Before, "B", 0, "Print N lines before each match")
+	flag.IntVar(&fl.Context, "C", 0, "Print N lines before and after each match")
+	flag.BoolVar(&fl.Count, "c", false, "Print only a count of selected lines")
+	flag.BoolVar(&fl.Ignore, "i", false, "Ignore case distinctions")
+	flag.BoolVar(&fl.Invert, "v", false, "Invert the sense of matching")
+	flag.BoolVar(&fl.Fixed, "F", false, "Interpret pattern as a literal string")
+	flag.BoolVar(&fl.LineNum, "n", false, "Print line number with output lines")
 	flag.Parse()
+
+	// Обработка флагов контекста
 	if fl.Context > fl.After {
 		fl.After = fl.Context
 	}
 	if fl.Context > fl.Before {
 		fl.Before = fl.Context
 	}
+
 	return fl
 }
-func main() {
-	fl := flagsInit()
 
-	//собираем аргументы, искомая строка и название файла
-	args := flag.Args()
-
-	//если аргументов нехватает пишем как использовать программу
-	if len(args) < 2 {
-		log.Fatalln("Чтобы начать поиск: [флаги] [искомая строка] [название файла]")
-	}
-
-	//искомая фраза
-	slicePhrase := args[:len(args)-1]
-	//объединяем в одну строку если фраза состоит из нескольких слов
-	desired := strings.Join(slicePhrase, " ")
-
-	//Считываем файл
-	file, err := ioutil.ReadFile(args[len(args)-1])
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	//сплитим файл построчно
-	splitString := strings.Split(string(file), "\n")
-	//Используем grep и записываем результат, затем печатаем его
-	res := Grep(desired, splitString, fl)
-	if fl.Count {
-		fmt.Printf("Совпадений: %v \n", len(res.lineNums))
-
-	} else if fl.LineNum {
-		for _, v := range res.lineNums {
-			fmt.Println(v)
-		}
-
-	} else {
-		fmt.Println(res.strs)
-	}
-}
-
-//функция поиска фразы или строки в файле с применением доп.условий
 func Grep(desired string, text []string, fl flags) result {
-	//слайс с результатами поиска. Это массив из узлов, каждый из которых массив ключ значение
 	res := result{}
-	var condition bool // условие сравнения
+	var condition bool
 
-	//проходим построчно по файлу
 	for index, str := range text {
-		// если применен -i, убираем регистр
+		// Применение флага игнорирования регистра
 		if fl.Ignore {
-			//Переводим текущую строку в нижний регистр
 			str = strings.ToLower(str)
-			//Переводим искомую фразу в нижний регистр
 			desired = strings.ToLower(desired)
 		}
-		//Проверяем условия
+
+		// Проверка условий совпадения
 		if fl.Fixed {
-			condition = desired == str // полное совпадение строки
+			condition = desired == str
 		} else {
-			condition = strings.Contains(str, desired) // совпадение подстроки
+			condition = strings.Contains(str, desired)
 		}
 
-		//флаг исключения
+		// Применение флага инверсии совпадений
 		if fl.Invert {
 			condition = !condition
 		}
 
-		//Создаем объект temp для добавления в результат
 		temp := make([]string, 0)
-		// если условие выполняется то значит в эту строку записываем
 		if condition {
-			//Определяем количество строк для печати в зависимости от флагов
+			// Определение диапазона строк для вывода в зависимости от флагов
 			var upRange, downRange = 0, len(text) - 1
 			if d := index - fl.Before; d > upRange {
 				upRange = d
@@ -140,12 +101,44 @@ func Grep(desired string, text []string, fl flags) result {
 			}
 			for i := upRange; i <= downRange; i++ {
 				temp = append(temp, text[i])
-
 			}
 			res.lineNums = append(res.lineNums, index)
 			res.strs = append(res.strs, temp)
 		}
-
 	}
 	return res
+}
+
+func main() {
+	fl := flagsInit()
+
+	args := flag.Args()
+
+	if len(args) < 2 {
+		log.Fatalln("Usage: grep [OPTIONS] PATTERN [FILE]")
+	}
+
+	slicePhrase := args[:len(args)-1]
+	desired := strings.Join(slicePhrase, " ")
+
+	// Чтение файла
+	file, err := ioutil.ReadFile(args[len(args)-1])
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// Разбивка файла на строки
+	splitString := strings.Split(string(file), "\n")
+
+	// Применение grep и вывод результатов
+	res := Grep(desired, splitString, fl)
+	if fl.Count {
+		fmt.Printf("Matches: %v \n", len(res.lineNums))
+	} else if fl.LineNum {
+		for _, v := range res.lineNums {
+			fmt.Println(v)
+		}
+	} else {
+		fmt.Println(res.strs)
+	}
 }

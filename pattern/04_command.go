@@ -8,86 +8,61 @@ import "fmt"
 	https://en.wikipedia.org/wiki/Command_pattern
 */
 
-type Button struct {
+type Command interface {
+	Execute()
+}
+
+type Receiver struct {
+	Action string
+}
+
+func (r *Receiver) ActionMethod() {
+	fmt.Printf("Receiver executing action: %s\n", r.Action)
+}
+
+type ConcreteCommand struct {
+	receiver *Receiver
+}
+
+func NewConcreteCommand(receiver *Receiver) *ConcreteCommand {
+	return &ConcreteCommand{
+		receiver: receiver,
+	}
+}
+
+func (cc *ConcreteCommand) Execute() {
+	cc.receiver.ActionMethod()
+}
+
+type Invoker struct {
 	command Command
 }
 
-type OnCommand struct {
-	device Device
+func (i *Invoker) SetCommand(command Command) {
+	i.command = command
 }
 
-type Command interface {
-	execute()
-}
-
-type OffCommand struct {
-	device Device
-}
-
-type Device interface {
-	on()
-	off()
-}
-
-type Tv struct {
-	isRunning bool
-}
-
-func (b *Button) press() {
-	b.command.execute()
-}
-
-func (c *OnCommand) execute() {
-	c.device.on()
-}
-
-func (c *OffCommand) execute() {
-	c.device.off()
-}
-
-func (t *Tv) on() {
-	t.isRunning = true
-	fmt.Println("Turning tv on")
-}
-
-func (t *Tv) off() {
-	t.isRunning = false
-	fmt.Println("Turning tv off")
-}
-
-func main() {
-	tv := &Tv{}
-
-	onCommand := &OnCommand{
-		device: tv,
-	}
-
-	offCommand := &OffCommand{
-		device: tv,
-	}
-
-	onButton := &Button{
-		command: onCommand,
-	}
-	onButton.press()
-
-	offButton := &Button{
-		command: offCommand,
-	}
-	offButton.press()
+func (i *Invoker) ExecuteCommand() {
+	i.command.Execute()
 }
 
 /*
-Описание:
-Это поведенческий паттерн проектирования, который превращает запросы в объекты,
-позволяя передавать их как аргументы при вызове методов,
-ставить запросы в очередь, логировать их, а также поддерживать отмену операций.
-Преимущества:
-1. Убирает прямую зависимость между объектами, вызывающими операции, и объектами, которые их непосредственно выполняют.
-2. Позволяет реализовать простую отмену и повтор операций.
-3. Позволяет реализовать отложенный запуск операций.
-4. Позволяет собирать сложные команды из простых.
-5. Реализует принцип открытости/закрытости.
-Недостатки:
-1. Усложняет код программы из-за введения множества дополнительных классов.
+Применимость:
+Паттерн команды полезен, когда нужно параметризовать объекты событиями или запросами.
+Используется для реализации отмены операций, повтора операций или журналирования запросов.
+Удобен для реализации очередей запросов или планирования операций.
+
+Плюсы:
+Уменьшает связность между отправителем и получателем команды.
+Позволяет создавать составные команды из простых команд.
+Поддерживает отмену операций и повтор выполнения.
+
+Минусы:
+Может привести к увеличению числа классов в системе.
+
+Примеры использования на практике:
+Обработка пользовательских действий в графическом интерфейсе, таких как кнопки и меню.
+Управление заказами в интернет-магазине, где каждая команда представляет собой действие, которое нужно выполнить над заказом.
+Реализация систем умного дома, где команды могут управлять устройствами, такими как свет, температура и безопасность.
+
 */

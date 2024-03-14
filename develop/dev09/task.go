@@ -12,7 +12,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-//Получаем массив всех ссылок сайта
+// Получаем массив всех ссылок сайта
 func LinkParser(url string) []string {
 	//Загружаем ссылку
 	resp, err := http.Get(url)
@@ -37,7 +37,7 @@ func LinkParser(url string) []string {
 	return links
 }
 
-//функция скачивания документа
+// функция скачивания документа
 func downloadDocument(path string, url string) error {
 	//сплитим для выделения названия и пути сохранения
 	filepath := strings.Split(url, "/")
@@ -87,7 +87,7 @@ func downloadDocument(path string, url string) error {
 	return nil
 }
 
-//Скачиваем все файлы с сайта
+// Скачиваем все файлы с сайта
 func downloadFromPage(path string, url string) {
 	err := downloadDocument(path, url)
 	if err != nil {

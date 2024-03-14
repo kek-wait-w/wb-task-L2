@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/beevik/ntp"
-	"os"
+	"log"
 	"time"
 )
 
@@ -18,17 +18,17 @@ import (
 Программа должна корректно обрабатывать ошибки библиотеки: распечатывать их в STDERR и возвращать ненулевой код выхода в OS.
 Программа должна проходить проверки go vet и golint.
 */
-//getTimeNow функция получения времени с помощью пакета ntp
-func getTimeNow() (time.Time, error) {
-	t, err := ntp.Time("0.beevik-ntp.pool.ntp.org")
-	return t, err
+
+func getTime() (time.Time, error) {
+	time, err := ntp.Time("0.beevik-ntp.pool.ntp.org")
+	return time, err
 }
 
 func main() {
-	timeNow, err := getTimeNow()
+	time, err := getTime()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "ERROR: %v", err)
-		os.Exit(1)
+		log.Fatal("Error: ", err)
 	}
-	fmt.Println(timeNow)
+	fmt.Println("Точное время:")
+	fmt.Println(time.Hour(), "часов", time.Minute(), "минут", time.Second(), "секунд")
 }

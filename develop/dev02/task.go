@@ -1,11 +1,10 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"os"
+	"log"
 	"strconv"
-	"unicode"
+	"strings"
 )
 
 /*
@@ -26,47 +25,53 @@ import (
 Функция должна проходить все тесты. Код должен проходить проверки go vet и golint.
 */
 
-func Unpack(input string) (string, error) {
-	//проверка на пустую строку
-	if input == "" {
-		return "", nil
-	}
+func unPack(str string) string {
+	var errFlag, escapeFlag bool
+	var res, buf string
+	unp := strings.Split(str, "")
+	// основной алгоритм распаковки
+	for _, i := range unp {
 
-	runes := []rune(input)
-	//проверка на валидность строки
-	isDig := true
-	for i := 0; i < len(runes); i++ {
-		if isDig && unicode.IsDigit(runes[i]) {
-			return "", errors.New("incorrect input")
+		if i == "\\" && !escapeFlag {
+			escapeFlag = true
+			continue
 		}
-		isDig = unicode.IsDigit(runes[i])
-	}
 
-	res := make([]rune, 0)
-	var prev rune
-	//алгоритм распаковки
-	for _, r := range input {
-		//если буква - пишем
-		if unicode.IsLetter(r) {
-			res = append(res, r)
-			prev = r
-		} else if unicode.IsDigit(r) { //если цифра, то пишем предыдущую n раз
-			num, err := strconv.Atoi(string(r))
-			if err != nil {
-				return "", errors.New("ERROR: converting to int")
-			}
-			for i := 0; i < num-1; i++ {
-				res = append(res, prev)
-			}
+		cap, err := strconv.Atoi(i)
+		if err != nil && i != "\\" {
+			res += i
+			buf = i
+			errFlag = true
+			continue
+		}
+
+		if escapeFlag {
+			res += i
+			buf = i
+			escapeFlag = false
+			continue
+		}
+
+		for j := 1; j < cap; j++ {
+			res += buf
 		}
 	}
-	return string(res), nil
+
+	//обработка ошибки, если одни числа
+	if !errFlag {
+		log.Fatal("Error: No letter, wrong data")
+	}
+
+	return res
 }
 
 func main() {
-	str, err := Unpack("a4bc2d5e")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "ERROR: : %v", err)
+	var str string
+	fmt.Scanln(&str)
+	// проверка на пустую строку
+	if str != "" {
+		fmt.Println(unPack(str))
+	} else {
+		fmt.Println("")
 	}
-	fmt.Println(str)
 }

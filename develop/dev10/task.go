@@ -96,7 +96,7 @@ func main() {
 	}
 }
 
-//Ждем нужного сигнала для выхода из программы
+// Ждем нужного сигнала для выхода из программы
 func Exit(exitChan chan os.Signal) {
 	for {
 		switch <-exitChan {

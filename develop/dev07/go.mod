@@ -1,3 +1,3 @@
-module dev07
+module main
 
-go 1.18
+go 1.22.1

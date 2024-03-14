@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"sync"
 	"time"
 )
 
@@ -39,6 +38,39 @@ start := time.Now()
 fmt.Printf(“fone after %v”, time.Since(start))
 */
 
+func or(channels ...<-chan interface{}) <-chan interface{} {
+	switch len(channels) {
+	case 0:
+		// Не передано ни одного канала
+		return nil
+	case 1:
+		// Если передан только один канал, вернуть его
+		return channels[0]
+	}
+
+	done := make(chan interface{})
+	go func() {
+		defer close(done)
+
+		switch len(channels) {
+		case 2:
+			// Если передано два канала, используем select
+			select {
+			case <-channels[0]:
+			case <-channels[1]:
+			}
+		default:
+			// Если передано более двух каналов, рекурсивно вызываем функцию or
+			select {
+			case <-or(append(channels[:len(channels)-1])...):
+			case <-channels[len(channels)-1]:
+			}
+		}
+	}()
+
+	return done
+}
+
 func main() {
 	//Функция создает канал, который закрывается спустя заданное время
 	sig := func(after time.Duration) <-chan interface{} {
@@ -51,33 +83,12 @@ func main() {
 	}
 	start := time.Now()
 	//or получает список каналов и возвращает один, который завершится при завершении любого канала из списка
-	<-Or(
+	<-or(
 		sig(2*time.Hour),
 		sig(5*time.Minute),
-		sig(3*time.Second),
+		sig(1*time.Second),
 		sig(1*time.Hour),
 		sig(1*time.Minute),
 	)
 	fmt.Printf("Done after %v", time.Since(start))
-}
-
-func Or(ch ...<-chan interface{}) <-chan interface{} {
-	// создаем single канал который вернем
-	out := make(chan interface{})
-	var wg sync.WaitGroup
-	wg.Add(1)
-	// Запускаем горутины прослушивающие каналы из списка(создаем каналы)
-	for _, channel := range ch {
-		//анонимная функция, смотрит за каналом, когда он завершится, сработает wg.Done() и мы сможем закрыть single канал
-		go func(channel <-chan interface{}) {
-			// в каждом из них запускаем цикл который завершится по закрытии канала
-			for range channel {
-			}
-			wg.Done()
-		}(channel)
-	}
-	wg.Wait()
-	// закрываем сингл канал и возвращаем
-	close(out)
-	return out
 }
